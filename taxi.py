@@ -1,4 +1,7 @@
 import math
+from typing import Dict
+
+import CSPsolver
 import numpy
 import heapq
 
@@ -38,6 +41,7 @@ class FareInfo:
 
 
 class Taxi:
+
     # message type constants
     FARE_ADVICE = 1
     FARE_ALLOC = 2
@@ -367,6 +371,42 @@ class Taxi:
         path = [origin]
         # take the next node in the frontier, and expand it depth-wise
 
+
+
+
+        bfsFail = False;
+
+        #go through different search algorithms. if cannot determin a path, move to the next and then the next
+        #first search algorithm will attempt to use breadth-first search
+
+
+
+
+
+        dijsktraFail = False;
+        #then it will do dijsktra's algorithm
+        if (bfsFail == True):
+            path = path
+        # path = dijsktra(graph, initial, end)
+
+
+        #finally if all else fails, it will use the original dfs algorithm.
+        if(dijsktraFail == True):
+            path = self.leagcyDFSalgorithm(origin, destination, args, path)
+
+
+
+
+
+
+
+
+
+        return []
+
+
+
+    def leagcyDFSalgorithm(self, origin, destination, args, path):
         if origin in self._map:
             # the frontier of unexplored paths (from this Node
             frontier = [node for node in self._map[origin].keys() if node not in args['explored']]
@@ -381,15 +421,6 @@ class Taxi:
                 if destination in path:
 
                     return path
-
-        # didn't reach the destination from any reachable node
-        # no need, therefore, to expand the path for the higher-
-
-        graph = Taxi.Graph()
-
-        path = self.dijsktra(graph, origin)
-        return path
-
 
 
     #implement dijsktra search algorithm instead of depth-first algorithm
@@ -449,12 +480,27 @@ class Taxi:
         ## Multiple if statements to check for values as 'checks'
         ## reasoning based on probabilistic reasoning
 
+        #variables : objects
+        #domain : variables limits
+        #constraints : objects and other object with limit
+
         #determine time lost £1 per time unit, to evaluate the bid better and make more profits
         moneylosttotime = time
 
-        # no passengers
-        NoCurrentPassengers = self._passenger is None
+
+        #First Constraint to solve, if taxi has no passengers
+        NoPassengersDemandValue = 0       # --> domain
+        NoCurrentPassengers = self._passenger is None   # no passengers -> variable
+
+        #no allocated fares
         NoAllocatedFares = len([fare for fare in self._availableFares.values() if fare.allocated]) == 0
+
+        if((NoAllocatedFares == 0) & (NoCurrentPassengers == None)):
+            NoPassengersDemandValue = 1
+
+
+
+
 
         #understand bid pricing
         TimeToOrigin = self._world.travelTime(self._loc, self._world.getNode(origin[0], origin[1]))
@@ -483,7 +529,14 @@ class Taxi:
 
         #not busy
         NotCurrentlyBooked = NoCurrentPassengers and NoAllocatedFares
+
+
         CloseEnough = CanAffordToDrive and WillArriveOnTime
+
+
+        #ensure that a taxi will get a ride.
+        if (NoPassengersDemandValue == 1):
+            CloseEnough = NotCurrentlyBooked
 
         #cost pricing
         Worthwhile = PriceBetterThanCost and NotCurrentlyBooked
@@ -491,6 +544,3 @@ class Taxi:
         #bid
         Bid = CloseEnough and Worthwhile
         return Bid
-
-
-

@@ -26,7 +26,7 @@ worldY = 50
 runTime = 1440
 # you can change the DisplaySize to be bigger if you want larger-size objects on-screen
 displaySize = (1024,768)
-trafficOn = True
+trafficOn = False
 
 # play around with these parameters if you want, to see how they affect the results.
 # (but keep the original settings so you can return to something more-or-less 'sensible)
