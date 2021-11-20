@@ -1,9 +1,22 @@
-import pygame
-import threading
-import time
-import math
-import numpy
-import pandas
+#   _________________________________________________________________
+#   Comptuer Science: COMP6032
+#   RoberUber Coursework
+#   19129576
+#   come219
+#   __________________________________________________________________
+
+#   _____________________________
+#   Imported Packages
+#   _____________________________
+import pygame       #pygame for gui and other core components
+import threading    #threading for application efficiency
+import time         #standard time library
+import math         #standard maths library
+import numpy        #standard numpy library
+import pandas       #standard pandas library
+
+#   ___________________________________________________________
+#   Python Modules that are used in conjunction with the project
 # the 3 Python modules containing the RoboUber objects
 import networld
 import taxi
@@ -26,7 +39,7 @@ worldY = 50
 runTime = 1440
 # you can change the DisplaySize to be bigger if you want larger-size objects on-screen
 displaySize = (1024,768)
-trafficOn = False
+trafficOn = True
 
 # play around with these parameters if you want, to see how they affect the results.
 # (but keep the original settings so you can return to something more-or-less 'sensible)

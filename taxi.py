@@ -356,11 +356,69 @@ class Taxi:
     ''' HERE IS THE PART THAT YOU NEED TO MODIFY
     '''
 
+    #   ______________________________________________________
+    #   planPath2 function
+    #   Revised plan path function with heuristic
+    #   path uses a* star search method
+    #
+    #
+    #   @params self        self object
+    #   @params origin      origin node
+    #   @params destination destination node
+    #   @params heuristic   heurstic modifier set to none
+    #   @**args             args
+    #   return ...
+    #   ______________________________________________________
+    def _planPath(self, origin, destination, heuristic=None, **args):
+        if origin not in self._map:     #checks if origin is in the map
+            return None                 #cannot determine
+
+        if origin == destination:       #if current location == destination
+            return [origin]             #turns -> path = [origin]
+
+        if heuristic is None:           #heuristic modifier function
+            heuristic = lambda x, y: math.sqrt((x[0] - y[0]) ** 2 + (x[1] - y[1]) ** 2)
+            heurstic = 1
+
+        explored = set()                #The nodes that have been expanded, so tracing backwards would be inefficient & unneccesary
+
+        expanded = {heuristic(origin, destination): {origin: [origin]}}
+                                        # Nodes still need to be explored -> sorted by estimated cost
+                                        #Contains the complete path stored because any one of them might contain the best solution
+                                        #Declare this as a nested dictionary to look up the cheapest path
+                                        #A heapq could also work but introduces implementation complexities.
+
+        while len(expanded) > 0:
+            bestPath = min(expanded.keys())
+            nextExpansion = expanded[bestPath]
+            if destination in nextExpansion:
+                return nextExpansion[destination]
+            nextNode = nextExpansion.popitem()
+            while len(nextExpansion) > 0 and nextNode[0] in explored:
+                nextNode = nextExpansion.popitem()
+            if len(nextExpansion) == 0:
+                del expanded[bestPath]
+            if nextNode[0] not in explored:
+                explored.add(nextNode[0])
+                expansionTargets = [node for node in self._map[nextNode[0]].items() if node[0] not in explored]
+                while len(expansionTargets) > 0:
+                    expTgt = expansionTargets.pop()
+                    estimatedDistance = bestPath # heuristic(nextNode[0], destination) + expTgt[1] + heuristic(expTgt[0], destination)
+
+                    if estimatedDistance in expanded:
+                        expanded[estimatedDistance][expTgt[0]] = nextNode[1] + [expTgt[0]]
+                    else:
+                        expanded[estimatedDistance] = {expTgt[0]: nextNode[1] + [expTgt[0]]}
+        return None
+
+
+
+
     # TODO
     # this function should build your route and fill the _path list for each new
     # journey. Below is a naive depth-first search implementation. You should be able
     # to do much better than this!
-    def _planPath(self, origin, destination, **args):
+    def _planPath1(self, origin, destination, **args):
         # the list of explored paths. Recursive invocations pass in explored as a parameter
         if 'explored' not in args:
             args['explored'] = {}
@@ -371,56 +429,77 @@ class Taxi:
         path = [origin]
         # take the next node in the frontier, and expand it depth-wise
 
+        #path = self.superBFSalgorithm(origin, destination, args, path)
 
 
-
-        bfsFail = False;
+        originalOrigin = origin
 
         #go through different search algorithms. if cannot determin a path, move to the next and then the next
         #first search algorithm will attempt to use breadth-first search
 
-
-
-
-
-        dijsktraFail = False;
-        #then it will do dijsktra's algorithm
-        if (bfsFail == True):
-            path = path
-        # path = dijsktra(graph, initial, end)
-
-
-        #finally if all else fails, it will use the original dfs algorithm.
-        if(dijsktraFail == True):
-            path = self.leagcyDFSalgorithm(origin, destination, args, path)
-
-
-
-
-
-
-
-
-
-        return []
-
-
-
-    def leagcyDFSalgorithm(self, origin, destination, args, path):
         if origin in self._map:
             # the frontier of unexplored paths (from this Node
             frontier = [node for node in self._map[origin].keys() if node not in args['explored']]
+
             # recurse down to the next node. This will automatically create a depth-first
             # approach because the recursion won't bottom out until no more frontier nodes
             # can be generated
-            for nextNode in frontier:
-                path = path + self._planPath(nextNode, destination, explored=args['explored'])
 
+            # self.leagcyDFSalgorithm(origin, destination, args, path, frontier)
+            #
+            #
+            # pathChecker = path
+            #
+            # #firstly attempt dijskraalgorithm
+            # if (dijsktraFail == True):
+            #     path = path # error fix if dijsktra fails
+            #     # path = dijsktra(graph, initial, end)
+            #
+            # if(path == pathChecker):
+            #     bfsFail = False
+            #
+            # #then it will do bfs search with a backup legacy dfs algorithm if bfs fails
+            # if(bfsFail == True):
+            #     path = self.superBFSalgorithm( origin, destination, args, pathChecker)
+
+
+            visited = []  # List to keep track of visited nodes.
+            queue = []  # Initialize a queue
+
+
+
+
+
+
+            boolDFS = True
+
+            #Falls Back on the leagcy dfs plan path algorithm
+            if(boolDFS == True):
+
+                for nextNode in frontier:
+                    path = path + self._planPath(nextNode, destination, explored=args['explored'])
+
+                    # stop early as soon as the destination has been found by any route.
+                    if destination in path:
+                        return path
+
+        return []
+
+    def superBFSalgorithm(self, _origin, _destination, _args, _path):
+
+        if _origin in self._map:
+            # the frontier of unexplored paths (from this Node
+            frontier = [node for node in self._map[_origin].keys() if node not in _args['explored']]
+            nextfront = [node for node in self._map[_origin].keys() if node not in _args['explored']]
+
+            for nextNode in nextfront:
+                path = _path + self._planPath(nextNode, _destination, explored=_args['explored'])
 
                 # stop early as soon as the destination has been found by any route.
-                if destination in path:
-
+                if _destination in path:
+                    origin = nextfront
                     return path
+
 
 
     #implement dijsktra search algorithm instead of depth-first algorithm
@@ -495,7 +574,7 @@ class Taxi:
         #no allocated fares
         NoAllocatedFares = len([fare for fare in self._availableFares.values() if fare.allocated]) == 0
 
-        if((NoAllocatedFares == 0) & (NoCurrentPassengers == None)):
+        if((NoCurrentPassengers == None)):
             NoPassengersDemandValue = 1
 
 
@@ -513,18 +592,24 @@ class Taxi:
         CanAffordToDrive = self._account > TimeToOrigin
 
         #assign fare
-        #apply the 'moneylosttotime' to the price
-        FairPriceToDestination = price > TimeToDestination
+        #percentMoneyLostToTime = (moneylosttotime * 50) / 100    #apply the 'moneylosttotime' to the price (10% of time lost)
+        FairPriceToDestination = price > TimeToDestination # and percentMoneyLostToTime
 
-        #evaluate price
+        #evaluate price w/ the money lost to time in the formulat
+
+
         PriceBetterThanCost = FairPriceToDestination and FiniteTimeToDestination
+
+
 
         #fare wait
         FareExpiryInFuture = self._maxFareWait > self._world.simTime - time
+
         EnoughTimeToReachFare = self._maxFareWait - self._world.simTime + time > TimeToOrigin
 
         #driving measurements
         SufficientDrivingTime = FiniteTimeToOrigin and EnoughTimeToReachFare
+
         WillArriveOnTime = FareExpiryInFuture and SufficientDrivingTime
 
         #not busy
@@ -535,7 +620,8 @@ class Taxi:
 
 
         #ensure that a taxi will get a ride.
-        if (NoPassengersDemandValue == 1):
+        if(NoCurrentPassengers == True):
+            NotCurrentlyBooked = NoCurrentPassengers
             CloseEnough = NotCurrentlyBooked
 
         #cost pricing
@@ -543,4 +629,7 @@ class Taxi:
 
         #bid
         Bid = CloseEnough and Worthwhile
+
+
+
         return Bid
