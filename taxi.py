@@ -1,6 +1,17 @@
+#   _________________________________________________________________
+#   Comptuer Science: COMP6032
+#   RoberUber Coursework
+#   19129576
+#   come219
+#   __________________________________________________________________
+
+#   _____________________________
+#   Imported Packages
+#   _____________________________
 import math
 from typing import Dict
 
+# Other Imported Packages and scripts -- unused
 import CSPsolver
 import numpy
 import heapq

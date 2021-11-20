@@ -8,52 +8,66 @@
 #   _____________________________
 #   Imported Packages
 #   _____________________________
-import pygame       #pygame for gui and other core components
-import threading    #threading for application efficiency
-import time         #standard time library
-import math         #standard maths library
-import numpy        #standard numpy library
-import pandas       #standard pandas library
+import pygame       # pygame for gui and other core components
+import threading    # threading for application efficiency
+import time         # standard time library
+import math         # standard maths library
+import numpy        # standard numpy library
+import pandas       # standard pandas library
 
-#   ___________________________________________________________
+#   ______________________________________________________________
 #   Python Modules that are used in conjunction with the project
-# the 3 Python modules containing the RoboUber objects
-import networld
-import taxi
-import dispatcher
+#   the 3 Python modules containing the RoboUber objects
+#   ______________________________________________________________
+import networld     # environment which contains the streets and other map objects
+import taxi         # the agents that traverse the map and picks up fares in the environment
+import dispatcher   # the manager of the agents that assign bids to fares
 
+#   ____________________________________
+#   [ RoboUber Class ] : [networld Class], [Dipatcher Class] : [Taxi Class]
+#   RoboUber contains the main function and initialises all objects from the pyscript to run solution
+#   Defines declarations and returns main with system print output
+#   ____________________________________
 
-
-
-
-
+#   ___________________________________________________________________________
+# TODO  (LEAGACY TODO COMMENT)
 # create objects for RoboUber
-
-
-# TODO
+#
 # experiment with parameter settings. worldX and worldY should not need to be
 # changed, but others are fair game!
 # basic parameters
-worldX = 50
-worldY = 50
-runTime = 1440
-# you can change the DisplaySize to be bigger if you want larger-size objects on-screen
-displaySize = (1024,768)
-trafficOn = True
+#   _______________________________________________________________
 
+
+#   _______________________________________________________
+#   World, Window and Traffic parameters
+#   assign inital values of streets, fares, junctions
+#   ______________________________________________________
+worldX = 50                 # world's X parameter
+worldY = 50                 # world's Y parameter
+runTime = 1440              # total run time parameter
+displaySize = (1024,768)    # you can change the DisplaySize to be bigger if you want larger-size objects on-screen
+trafficOn = True            # Traffic parameter, causes problems in determining paths and creates the time destination to take longer
+
+#   ______________________________________________________________________________________________
+#   TODO (LEGACY COMMENT)
 # play around with these parameters if you want, to see how they affect the results.
 # (but keep the original settings so you can return to something more-or-less 'sensible)
+#   _______________________________________________________________________________________________
 
-# most popular locations can generate a fare every hour
-fareProbMagnet = lambda m: numpy.random.random() > 0.98
-# popular locations generate a fare about once every 2 hours
-fareProbPopular = lambda p: numpy.random.random() > 0.992
-# semi-popular locations generate a fare approximately every 4 hours
-fareProbSemiPopular = lambda s: numpy.random.random() > 0.995
-# normal locations generate a fare about once per day
-fareProbNormal = lambda n: numpy.random.random() > 0.999
+#   _________________________________________________________________
+#   Fare Parameters Assignment
+#   Assigns different fare heurtistics, types
+#   _______________________________________________________________
+fareProbMagnet = lambda m: numpy.random.random() > 0.98         # most popular locations can generate a fare every hour
+fareProbPopular = lambda p: numpy.random.random() > 0.992       # popular locations generate a fare about once every 2 hours
+fareProbSemiPopular = lambda s: numpy.random.random() > 0.995   # semi-popular locations generate a fare approximately every 4 hours
+fareProbNormal = lambda n: numpy.random.random() > 0.999        # normal locations generate a fare about once per day
 
-# some traffic injectors and sinks for real-time simulation
+#   _____________________________________________________________
+#   Traffic Injector and Sinks Parameter Assignment
+#   some traffic injectors and sinks for real-time simulation
+#   ____________________________________________________________
 trafficSrcMinor = 1 if trafficOn else 0
 trafficSrcSignificant = 2 if trafficOn else 0
 trafficSrcMajor = 3 if trafficOn else 0
@@ -63,7 +77,10 @@ trafficSinkSignificant = 2 if trafficOn else 0
 trafficSinkMajor = 3 if trafficOn else 0
 trafficSinkDrain = 4 if trafficOn else 0
 
-# some nodes - this can be automated
+#   _______________________________________________________________________
+#   Junction Node Parameter Assignment and Declaration
+#   some nodes - this can be automated
+#   __________________________________________________________________________
 jct0 = networld.junctionDef(x=0, y=0, cap=2, canStop=True, src=trafficSrcMinor, sink=trafficSinkMinor)
 jct1 = networld.junctionDef(x=20, y=0, cap=2, canStop=True, src=trafficSrcSignificant, sink=trafficSinkMinor)
 jct2 = networld.junctionDef(x=40, y=0, cap=2, canStop=True, src=trafficSrcMajor, sink=trafficSinkMajor)
@@ -97,11 +114,17 @@ jct29 = networld.junctionDef(x=15, y=49, cap=2, canStop=True, src=trafficSrcSign
 jct30 = networld.junctionDef(x=30, y=49, cap=2, canStop=True, src=trafficSrcMinor, sink=trafficSinkMinor)
 jct31 = networld.junctionDef(x=49, y=49, cap=2, canStop=True, src=trafficSrcMinor, sink=trafficSinkMinor)
 
+# Junction Array containing all the junctions
 junctions = [jct0,jct1,jct2,jct3,jct4,jct5,jct6,jct7,jct8,jct9,jct10,jct11,jct12,jct13,jct14,jct15,
              jct16,jct17,jct18,jct19,jct20,jct21,jct22,jct23,jct24,jct25,jct26,jct27,jct28,jct29,jct30,jct31]
+# Junction ID, returns array of node's X, Y
 junctionIdxs = [(node.x,node.y) for node in junctions]
 
-# and some streets between them; likewise, this can be automated
+
+#   __________________________________________________________________
+#   Street Nodes Parameters Assignment and Declaration
+#   and some streets between them; likewise, this can be automated
+#   _____________________________________________________________________
 strt0 = networld.streetDef((0,0), (10,10), 3, 7, biDirectional=True)
 strt1 = networld.streetDef((0,10),(10,10), 2, 6, biDirectional=True)
 strt2 = networld.streetDef((0,35), (10,35), 2, 6, biDirectional=True)
@@ -151,87 +174,110 @@ strt45 = networld.streetDef((40,15), (49,15), 2, 6, biDirectional=True)
 strt46 = networld.streetDef((40,30), (49,30), 2, 6, biDirectional=True)
 strt47 = networld.streetDef((40,40), (49,49), 3, 7, biDirectional=True)
 
+# Streets node array containing all the street nodes
 streets = [strt0,strt1,strt2,strt3,strt4,strt5,strt6,strt7,strt8,strt9,strt10,strt11,strt12,strt13,strt14,strt15,
            strt16,strt17,strt18,strt19,strt20,strt21,strt22,strt23,strt24,strt25,strt26,strt27,strt28,strt29,strt30,strt31,
            strt32,strt33,strt34,strt35,strt36,strt37,strt38,strt39,strt40,strt41,strt42,strt43,strt44,strt45,strt46,strt47]
 
-# create the dict of things we want to record
+#   ________________________________________________________
+#   Output Values Parameter Assignment and Declaration
+#   create the dict of things we want to record
+#   time, world simulation time
+#   fares, array fares
+#   taxis, array of taxis
+#
+#   Unimplemeted dict Output values
+#   RevenueTaxis, total taxis revenue
+#   RevenueDis, total dispatcher revenue
+#   RevenueTotal, total revenue
+#   Heuristic, heuristic parameter
+#   _____________________________________________________________________
 outputValues = {'time': [], 'fares': {}, 'taxis': {}}
 
-# RoboUber itself will be run as a separate thread for performance, so that screen
-# redraws aren't interfering with model updates.
+#   ___________________________________________________________________________
+#   Main Function: runRoboUber Function
+#   RoboUber itself will be run as a separate thread for performance, so that screen
+#   redraws aren't interfering with model updates.
+#
+#   Uses world X, Y paramenters, runTime Parameters, user stop parameter
+#   Defines junctions, streets
+#   Sets interpolate
+#   Sets output values ->
+#   **args
+#   ___________________________________________________________________________________
 def runRoboUber(worldX,worldY,runTime,stop,junctions=None,streets=None,interpolate=False,outputValues=None,**args):
 
-   if 'fareProbNormal' not in args:
+   if 'fareProbNormal' not in args:     # Define Fare Probability in args
       args['fareProbNormal'] = lambda x: numpy.random.random() > 0.999
-   # create the NetWorld - the service area
-   print("Creating world...")
+
+   print("Creating world...")           # create the NetWorld - the service area
    svcArea = networld.NetWorld(x=worldX,y=worldY,runtime=runTime,fareprob=args['fareProbNormal'],jctNodes=junctions,edges=streets,interpolateNodes=interpolate)
-   print("Exporting map...")
+
+   print("Exporting map...")            # export the map to area (world)
    svcMap = svcArea.exportMap()
-   if 'serviceMap' in args:
+
+   if 'serviceMap' in args:             # assign service map in args
       args['serviceMap'] = svcMap
 
+    #   _______________________________________________________________
+    #   TODO (Old Output return code and graph)     ... set to remove
+    #   link the graph to the taxis as they have their individual path
+    #    graph = taxi.Graph()
+    #    graph.edges = streets
+    #    for edge in graph.edges:
+    #        graph.add_edge(*edge)
+    #    taxi0.edges = streets.
+    #   __________________________________________________________________
 
-#link the graph to the taxis as they have their individual path
-   #graph = taxi.Graph()
-
-   #graph.edges = streets
-
-   #for edge in graph.edges:
-   #    graph.add_edge(*edge)
-
-   # taxi0.edges = streets.
-
-
-   # create some taxis
+#   _____________________________________________________________________________
+#   Taxis function and Assignment
+#   create some taxis and assign to array
+#   ___________________________________________________________________________
    print("Creating taxis")
    taxi0 = taxi.Taxi(world=svcArea,taxi_num=100,service_area=svcMap,start_point=(20,0))
    taxi1 = taxi.Taxi(world=svcArea,taxi_num=101,service_area=svcMap,start_point=(49,15))
    taxi2 = taxi.Taxi(world=svcArea,taxi_num=102,service_area=svcMap,start_point=(15,49))
    taxi3 = taxi.Taxi(world=svcArea,taxi_num=103,service_area=svcMap,start_point=(0,35))
 
+   taxis = [taxi0,taxi1,taxi2,taxi3]    # assign individual taxi X to taxis array
 
-   taxis = [taxi0,taxi1,taxi2,taxi3]
-
-
-
-
-
-   # and a dispatcher
-   print("Adding a dispatcher")
+#   _______________________________________________________________________________
+#   Dispatcher functino and Assignment
+#   initialises dispatcher0 and assigns the world, svcArea and the taxis, taxis
+#   ______________________________________________________________________________
+   print("Adding a dispatcher")         # and a dispatcher
    dispatcher0 = dispatcher.Dispatcher(parent=svcArea,taxis=taxis)
+   svcArea.addDispatcher(dispatcher0)   # who should be on duty
 
-   # who should be on duty
-   svcArea.addDispatcher(dispatcher0)
-
-   # bring the taxis on duty
-   print("Bringing taxis on duty")
-   for onDutyTaxi in taxis:
+   print("Bringing taxis on duty")      # bring taxis to run
+   for onDutyTaxi in taxis:             # bring the taxis on duty
        onDutyTaxi.comeOnDuty()
 
-   threadRunTime = runTime
-   threadTime = 0
-   print("Starting world")
-   while threadTime < threadRunTime:
+#   __________________________________________________________________________
+#   Thread and Word Parameter
+#   thread loop declaration and mechanic/method/law
+#   ________________________________________________________________________
+   threadRunTime = runTime              # thread run time, same as total run time
+   threadTime = 0                       # thread running time init and declaration
+   print("Starting world")              # start the world
 
-         # exit if 'q' has been pressed
-         if stop.is_set():
-            threadRunTime = 0
-         else: 
+   while threadTime < threadRunTime:    # thread loop
+
+
+         if stop.is_set():              # exit if 'q' has been pressed
+            threadRunTime = 0           # set thread run time to zero which causes application to close
+
+         else:                          # run the thread
             svcArea.runWorld(ticks=1, outputs=outputValues)
 
-            # print("Times: {0}, Fares: {1}, Taxis: {2}".format(outputValues['time'], outputValues['fares'].keys(), outputValues['taxis'].keys()))
             if threadTime != svcArea.simTime:
 
                 threadTime += 1
                 time.sleep(1)
 
+userExit = threading.Event()                        # event to manage a user exit, invoked by pressing 'q' on the keyboard
 
-# event to manage a user exit, invoked by pressing 'q' on the keyboard
-userExit = threading.Event()
-
-roboUber = threading.Thread(target=runRoboUber,
+roboUber = threading.Thread(target=runRoboUber,     #   RoboUber,thread of robouber with parameters
                             name='RoboUberThread',
                             kwargs={'worldX':worldX,
                                     'worldY':worldY,
@@ -246,59 +292,62 @@ roboUber = threading.Thread(target=runRoboUber,
                                     'fareProbSemiPopular':fareProbSemiPopular,
                                     'fareProbNormal':fareProbNormal})
 
-pygame.init()
-displaySurface = pygame.display.set_mode(size=displaySize,flags=pygame.RESIZABLE) # |pygame.SCALED arrgh...new in pygame 2.0, but pip install installs 1.9.6 on Ubuntu 16.04 LTS
-backgroundRect = None
-aspectRatio = worldX/worldY
-if aspectRatio > 4/3:
-   activeSize = (displaySize[0]-100, (displaySize[0]-100)/aspectRatio)
+
+#   ________________________________________________________________________
+#   PyGame Function and Parameters
+#
+#   _________________________________________________________________________
+pygame.init()                                                                       # init py game
+displaySurface = pygame.display.set_mode(size=displaySize,flags=pygame.RESIZABLE)   # |pygame.SCALED arrgh...new in pygame 2.0, but pip install installs 1.9.6 on Ubuntu 16.04 LTS
+backgroundRect = None                                                               # background rect
+aspectRatio = worldX/worldY                                                         # aspect ratio of world x, world y
+if aspectRatio > 4/3:                                                               # aspect ratio check
+   activeSize = (displaySize[0]-100, (displaySize[0]-100)/aspectRatio)              # assign active size if greater than 4/3
 else:
-   activeSize = (aspectRatio*(displaySize[1]-100), displaySize[1]-100)
-displayedBackground=pygame.Surface(activeSize)
-displayedBackground.fill(pygame.Color(255,255,255))
+   activeSize = (aspectRatio*(displaySize[1]-100), displaySize[1]-100)              # assign 4/3 ratio
+displayedBackground=pygame.Surface(activeSize)                                      # pygame surface display
+displayedBackground.fill(pygame.Color(255,255,255))                                 # pygame color display
 activeRect = pygame.Rect(round((displaySize[0]-activeSize[0])/2),round((displaySize[1]-activeSize[1])/2),activeSize[0],activeSize[1])
+                                                                                    # pygame active rect
+meshSize = ((activeSize[0]/worldX),round(activeSize[1]/worldY))                     # mesh size of active size
 
-meshSize = ((activeSize[0]/worldX),round(activeSize[1]/worldY))
-
-# create a mesh of possible drawing positions
-positions = [[pygame.Rect(round(x*meshSize[0]),
+positions = [[pygame.Rect(round(x*meshSize[0]),             # create a mesh of possible drawing positions
                           round(y*meshSize[1]),
                           round(meshSize[0]),
                           round(meshSize[1]))
               for y in range(worldY)]
              for x in range(worldX)]
 drawPositions = [[displayedBackground.subsurface(positions[x][y]) for y in range(worldY)] for x in range(worldX)]
+                                                            # draw positions of surfaces and display
 
-# junctions exist only at labelled locations; it's convenient to create subsurfaces for them
-jctRect = pygame.Rect(round(meshSize[0]/4),
+jctRect = pygame.Rect(round(meshSize[0]/4),                 # junctions exist only at labelled locations; it's convenient to create subsurfaces for them
                       round(meshSize[1]/4),
                       round(meshSize[0]/2),
                       round(meshSize[1]/2))
 jctSquares = [drawPositions[jct[0]][jct[1]].subsurface(jctRect) for jct in junctionIdxs]
+                                                            # junction squares of surfaces
 
-# initialise the network edge drawings (as grey lines)
-for street in streets:
+
+for street in streets:                                      # initialise the network edge drawings (as grey lines)
     pygame.draw.aaline(displayedBackground,
                        pygame.Color(128,128,128),
                        (round(street.nodeA[0]*meshSize[0]+meshSize[0]/2),round(street.nodeA[1]*meshSize[1]+meshSize[1]/2)),
                        (round(street.nodeB[0]*meshSize[0]+meshSize[0]/2),round(street.nodeB[1]*meshSize[1]+meshSize[1]/2)))
     
-# initialise the junction drawings (as grey boxes)
-for jct in range(len(junctionIdxs)):
-    jctSquares[jct].fill(pygame.Color(192,192,192))
-    # note that the rectangle target in draw.rect refers to a Rect relative to the source surface, not an
-    # absolute-coordinates Rect.
+
+for jct in range(len(junctionIdxs)):                        # initialise the junction drawings (as grey boxes)
+    jctSquares[jct].fill(pygame.Color(192,192,192))         # note that the rectangle target in draw.rect refers to a Rect relative to the source surface, not an absolute-coordinates Rect.
     pygame.draw.rect(jctSquares[jct],pygame.Color(128,128,128),pygame.Rect(0,0,round(meshSize[0]/2),round(meshSize[1]/2)),5)
+                                                            # pygame draw
 
-# redraw the entire image    
-displaySurface.blit(displayedBackground, activeRect)
-pygame.display.flip()
 
-# which taxi is associated with which colour
-taxiColours = {}
-# possible colours for taxis: black, blue, green, red, magenta, cyan, yellow, white
-taxiPalette = [pygame.Color(0,0,0),
-               pygame.Color(0,0,255),
+displaySurface.blit(displayedBackground, activeRect)        # redraw the entire image   (re blit)
+pygame.display.flip()                                       # display flip
+
+taxiColours = {}                    # possible colours for taxis: black, blue, green, red, magenta, cyan, yellow, white
+
+taxiPalette = [pygame.Color(0,0,0),             #color 0,0,0
+               pygame.Color(0,0,255),           #color 0,0,255
                pygame.Color(0,255,0),
                pygame.Color(255,0,0),
                pygame.Color(255,0,255),
@@ -306,53 +355,69 @@ taxiPalette = [pygame.Color(0,0,0),
                pygame.Color(255,255,0),
                pygame.Color(255,255,255)]
 
-# relative positions of taxi and fare markers in a mesh point
-taxiRect = pygame.Rect(round(meshSize[0]/3),
+taxiRect = pygame.Rect(round(meshSize[0]/3),    # relative positions of taxi and fare markers in a mesh point
                        round(meshSize[1]/3),
                        round(meshSize[0]/3),
                        round(meshSize[1]/3))
 
-fareRect = pygame.Rect(round(3*meshSize[0]/8),
+fareRect = pygame.Rect(round(3*meshSize[0]/8),  # fare rect and draw
                        round(3*meshSize[1]/8),
                        round(meshSize[0]/4),
                        round(meshSize[1]/4))
 
-# curTime is the time point currently displayed
-curTime = 0
 
-# start the simulation (which will automatically stop at the end of the run time)
-roboUber.start()
+curTime = 0             # curTime is the time point currently displayed
 
-# this is the display loop which updates the on-screen output.
-while curTime < runTime:
+roboUber.start()            # start the simulation (which will automatically stop at the end of the run time)
+while curTime < runTime:    # this is the display loop which updates the on-screen output.
 
-      # you can end the simulation by pressing 'q'. This triggers an event which is also passed into the world loop
+      # End the simulation Function
+      # Achieved by pressing 'q'.
+      # This triggers an event which is also passed into the world loop
       try:
           quitevent = next(evt for evt in pygame.event.get() if evt.type == pygame.KEYDOWN and evt.key == pygame.K_q)
           userExit.set()
           pygame.quit()
           #sys.exit()
-      # event queue had no 'q' keyboard events. Continue.
-      except StopIteration:
+
+      except StopIteration: # event queue had no 'q' keyboard events. Continue.
           pygame.event.get()
+
+
+          # print time function
+          # returns the current time and time elpased from dict time
           if 'time' in outputValues and len(outputValues['time']) > 0 and curTime != outputValues['time'][-1]:
-             print("curTime: {0}, world.time: {1}".format(curTime,outputValues['time'][-1]))
+             print("curTime: {0}, world.time: {1}".format(curTime,outputValues['time'][-1]))    # prints out the cur time and the current world time
 
+
+
+             # Print Fares Function
+             # returns all the fares
              if 'fares' in outputValues and len(outputValues['fares']) > 0:
-
+                 print("\n ___Fares Output___ \n")
                  farestext = pandas.DataFrame.from_dict(outputValues['fares'])
                  print(farestext)
+                 print(" \n")
 
-                 print(" \n\n")
-
+             # Print Taxis Function
+             # returns all the taxis
              if 'taxis' in outputValues and len(outputValues['taxis']) > 0:
-                 taxistext = pandas.DataFrame.from_dict(outputValues['taxis'])
-                 print(taxistext)
+                print("\n ___Taxis Output___ \n")
+                taxistext = pandas.DataFrame.from_dict(outputValues['taxis'])
+                print(taxistext)
+                print(" \n")
 
+             # Print Revenue Function
+             # returns all the revenue information
+             if 'taxis' in outputValues and len(outputValues['taxis']) > 0:
+                print("\n ___Revenues Output___ \n")
 
+                print("NULL")
+                print(" \n")
+                print(" eot \n\n")
 
-
-             print(" eot \n\n")
+             # old time to output unformatted output of all stuff ... -> set to remove
+             # print("Times: {0}, Fares: {1}, Taxis: {2}".format(outputValues['time'], outputValues['fares'].keys(), outputValues['taxis'].keys()))
 
 
              # naive: redraw the entire map each time step. This could be improved by saving a list of squares
