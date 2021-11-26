@@ -192,7 +192,8 @@ streets = [strt0,strt1,strt2,strt3,strt4,strt5,strt6,strt7,strt8,strt9,strt10,st
 #   RevenueTotal, total revenue
 #   Heuristic, heuristic parameter
 #   _____________________________________________________________________
-outputValues = {'time': [], 'fares': {}, 'taxis': {}}
+revenue = 0
+outputValues = {'time': [], 'fares': {}, 'taxis': {} , revenue:[] }
 
 #   ___________________________________________________________________________
 #   Main Function: runRoboUber Function
@@ -241,7 +242,15 @@ def runRoboUber(worldX,worldY,runTime,stop,junctions=None,streets=None,interpola
 
    taxis = [taxi0,taxi1,taxi2,taxi3]    # assign individual taxi X to taxis array
 
-#   _______________________________________________________________________________
+   # get revenue
+
+   #revenue =+ taxi0.getFareProfit()
+   #revenue =+ taxi1.getFareProfit()
+   #revenue =+ taxi2.getFareProfit()
+   #revenue =+ taxi3.getFareProfit()
+   revenue = outputValues['fares']
+
+   #   _______________________________________________________________________________
 #   Dispatcher functino and Assignment
 #   initialises dispatcher0 and assigns the world, svcArea and the taxis, taxis
 #   ______________________________________________________________________________
@@ -384,6 +393,7 @@ while curTime < runTime:    # this is the display loop which updates the on-scre
           pygame.event.get()
 
 
+
           # print time function
           # returns the current time and time elpased from dict time
           if 'time' in outputValues and len(outputValues['time']) > 0 and curTime != outputValues['time'][-1]:
@@ -411,8 +421,8 @@ while curTime < runTime:    # this is the display loop which updates the on-scre
              # returns all the revenue information
              if 'taxis' in outputValues and len(outputValues['taxis']) > 0:
                 print("\n ___Revenues Output___ \n")
-
-                print("NULL")
+                revenuetext = pandas.DataFrame.from_dict(outputValues[revenue])
+                print("Revenue: " + revenuetext)
                 print(" \n")
                 print(" eot \n\n")
 
@@ -484,6 +494,9 @@ while curTime < runTime:    # this is the display loop which updates the on-scre
              # redraw the whole map 
              displaySurface.blit(displayedBackground, activeRect)
              pygame.display.flip()
+
+
+
 
              # advance the time                           
              curTime += 1

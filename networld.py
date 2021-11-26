@@ -14,6 +14,14 @@ import heapq
 
 from taxi import Taxi
 
+#   _________________
+#   networld class script
+#   networld defines environment and fares
+#
+#   remains unedited...
+#   _______________________________
+
+
 # some straightforward data containers to help in initialising Worlds. A junction will
 # end up being a Node, a street will end up being an Edge.
 

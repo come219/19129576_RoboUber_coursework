@@ -15,7 +15,6 @@ from typing import Dict
 import CSPsolver
 import numpy
 import heapq
-
 from collections import defaultdict
 
 
@@ -28,6 +27,9 @@ from collections import defaultdict
 # origin is notably missing: that's because the Taxi will keep this
 # in a dictionary indexed by fare origin, so we don't need to duplicate that
 # here.
+from numpy.random import random
+
+
 class FareInfo:
 
     def __init__(self, destination, price):
@@ -52,6 +54,9 @@ class FareInfo:
 
 
 class Taxi:
+
+    #taxi fare unit
+    taxi_fare_unit = 0
 
     # message type constants
     FARE_ADVICE = 1
@@ -231,6 +236,7 @@ class Taxi:
             if self._passenger is not None:
                 if self._loc.dropoffFare(self._passenger, self._direction):
                     self._passenger = None
+
                 # failure to drop off means probably we're not at the destination. But check
                 # anyway, and replan if this is the case.
                 elif self._passenger.destination != self._loc.index:
@@ -367,8 +373,23 @@ class Taxi:
     ''' HERE IS THE PART THAT YOU NEED TO MODIFY
     '''
 
+    #   _______
+    #   get fare profit function
+    #   _______
+    def getFareProfit(self):
+        taxi_fare_unit = self._account
+        return self.taxi_fare_unit
+
+
+    # _______________________________________________________
+    #   Inital Taxi To, do
+    #   Define Plan Path using a better search algorithm than the legacy, dfs search
+    #   Define Bid on Fare algorithm
+    # ______________________________________________________
+
+
     #   ______________________________________________________
-    #   planPath2 function
+    #   planPath function (improved and modified)
     #   Revised plan path function with heuristic
     #   path uses a* star search method
     #
@@ -388,47 +409,78 @@ class Taxi:
             return [origin]             #turns -> path = [origin]
 
         if heuristic is None:           #heuristic modifier function
+            lamdamaths = lambda x, y: math.sqrt((x[0] - y[0]) ** 2 + (x[1] - y[1]) ** 2)
             heuristic = lambda x, y: math.sqrt((x[0] - y[0]) ** 2 + (x[1] - y[1]) ** 2)
-            heurstic = 1
 
-        explored = set()                #The nodes that have been expanded, so tracing backwards would be inefficient & unneccesary
 
-        expanded = {heuristic(origin, destination): {origin: [origin]}}
+
+        exploredSearch = set()                #The nodes that have been expanded, so tracing backwards would be inefficient & unneccesary
+
+        expandedSearch = {heuristic(origin, destination): {origin: [origin]}}
                                         # Nodes still need to be explored -> sorted by estimated cost
                                         #Contains the complete path stored because any one of them might contain the best solution
                                         #Declare this as a nested dictionary to look up the cheapest path
                                         #A heapq could also work but introduces implementation complexities.
 
-        while len(expanded) > 0:
-            bestPath = min(expanded.keys())
-            nextExpansion = expanded[bestPath]
-            if destination in nextExpansion:
-                return nextExpansion[destination]
-            nextNode = nextExpansion.popitem()
-            while len(nextExpansion) > 0 and nextNode[0] in explored:
-                nextNode = nextExpansion.popitem()
-            if len(nextExpansion) == 0:
-                del expanded[bestPath]
-            if nextNode[0] not in explored:
-                explored.add(nextNode[0])
-                expansionTargets = [node for node in self._map[nextNode[0]].items() if node[0] not in explored]
-                while len(expansionTargets) > 0:
-                    expTgt = expansionTargets.pop()
-                    estimatedDistance = bestPath # heuristic(nextNode[0], destination) + expTgt[1] + heuristic(expTgt[0], destination)
 
-                    if estimatedDistance in expanded:
-                        expanded[estimatedDistance][expTgt[0]] = nextNode[1] + [expTgt[0]]
+# !!!   explain a star algorithm step by step
+
+# !!!   explain how heuristic is used
+
+
+        # _____
+        #   A * while loop Operation
+        #   This operation attempts to search and find the end through the initial path
+        # _______________
+        while len(expandedSearch) > 0:
+
+
+            bestPath = min(expandedSearch.keys())         #set of keys that have been expanded are set to the best path, min
+            nextExpansion = expandedSearch[bestPath]      #uses heursitic of origin and destination vs origin
+
+            if destination in nextExpansion:        # if answer is the next step
+                return nextExpansion[destination]   # set the destination
+
+            nextNode = nextExpansion.popitem()      # else remove it
+
+            while len(nextExpansion) > 0 and nextNode[0] in exploredSearch:   # while expanded and not in the end and in origin and next node in explored
+                nextNode = nextExpansion.popitem()                      # next node becomes the next expansion search
+
+            if len(nextExpansion) == 0:             # while at the next node
+                del expandedSearch[bestPath]              # removed expanded and essentially search for a new path
+
+            if nextNode[0] not in exploredSearch:         # if origin not in explored
+                exploredSearch.add(nextNode[0])           #   add it
+                expansionTargets = [node for node in self._map[nextNode[0]].items() if node[0] not in exploredSearch] #expansion search becomes the next set of nodes from 0 if 0 isnt explored
+
+                # _________
+                #   A * while loop operation
+                #   this operation searches through expanded search until the endd
+                # __________
+                while len(expansionTargets) > 0:    # while expansion search is not at end
+                    expectedTarget = expansionTargets.pop() # add the expected target to the top from the top of the expanded path
+
+                    tupExptargetsNextNode = (heuristic(nextNode[1][0], destination) + (expectedTarget[1][1]))
+                    tupExptarget = (heuristic(expectedTarget[0], destination))
+                    estimatedDistance = bestPath - tupExptargetsNextNode + tupExptarget  #calculate the estimated distance as the best path -
+                                                                                                                                        # heurstitic modifier that effects path based on a value
+                                                                                                                                        # that will make another path more or less likely
+
+                    if estimatedDistance in expandedSearch:                                           # if the estimated distance is in expanded
+                        expandedSearch[estimatedDistance][expectedTarget[0]] = nextNode[1] + [expectedTarget[0]]      # make the expanded next node with expanded search target
                     else:
-                        expanded[estimatedDistance] = {expTgt[0]: nextNode[1] + [expTgt[0]]}
-        return None
+                        expandedSearch[estimatedDistance] = {expectedTarget[0]: nextNode[1] + [expectedTarget[0]]}    #or make the exapanded node search with expanded search target
+        return None # or cannot find
 
 
 
 
-    # TODO
+    #   ________________________________________________________________________
+    # TODO  (LEGACY TODO)
     # this function should build your route and fill the _path list for each new
     # journey. Below is a naive depth-first search implementation. You should be able
     # to do much better than this!
+    # _______________________________________________________________________
     def _planPath1(self, origin, destination, **args):
         # the list of explored paths. Recursive invocations pass in explored as a parameter
         if 'explored' not in args:
@@ -477,11 +529,6 @@ class Taxi:
             visited = []  # List to keep track of visited nodes.
             queue = []  # Initialize a queue
 
-
-
-
-
-
             boolDFS = True
 
             #Falls Back on the leagcy dfs plan path algorithm
@@ -496,6 +543,10 @@ class Taxi:
 
         return []
 
+#   ______________________________
+#   BFS search algoirthm    -> unused
+#   super as it falls back on the legacy dfs algorithm
+#   ___________________________________________
     def superBFSalgorithm(self, _origin, _destination, _args, _path):
 
         if _origin in self._map:
@@ -511,11 +562,12 @@ class Taxi:
                     origin = nextfront
                     return path
 
-
-
-    #implement dijsktra search algorithm instead of depth-first algorithm
-    ##currently unimplementable because of graph edges and weights
-    # determining the map to the graph
+#   __________________________________________
+#   Dijsktra search algorithm implementation
+#   implement dijsktra search algorithm instead of depth-first algorithm
+#   currently unimplementable because of graph edges and weights
+#    determining the map to the graph
+#   _____________________________________________________
     def dijsktra(graph, initial, end):
             # shortest paths is a dict of nodes
             # whose value is a tuple of (previous node, weight)
@@ -554,15 +606,20 @@ class Taxi:
             return path
 
 
-        # TODO
+        #   _________________________________________________________
+        #   TODO  (LEGACY TODO)
+        #   function for bidding on fares
+        #   improve so that it is more efficient and effective
+        #   _____________________________________________________________
 
-
-
-    # this function decides whether to offer a bid for a fare. In general you can consider your current position, time,
-    # financial state, the collection and dropoff points, the time the fare called - or indeed any other variable that
-    # may seem relevant to decide whether to bid. The (crude) constraint-satisfaction method below is only intended as
-    # a hint that maybe some form of CSP solver with automated reasoning might be a good way of implementing this. But
-    # other methodologies could work well. For best results you will almost certainly need to use probabilistic reasoning.
+    #  ____________________________________________________________________
+    #   bid on Fare Function for taxis
+    #   this function decides whether to offer a bid for a fare. In general you can consider your current position, time,
+    #   financial state, the collection and dropoff points, the time the fare called - or indeed any other variable that
+    #   may seem relevant to decide whether to bid. The (crude) constraint-satisfaction method below is only intended as
+    #   a hint that maybe some form of CSP solver with automated reasoning might be a good way of implementing this. But
+    #   other methodologies could work well. For best results you will almost certainly need to use probabilistic reasoning.
+    #   ___________________________________________________________________
     def _bidOnFare(self, time, origin, destination, price):
 
 
@@ -576,6 +633,14 @@ class Taxi:
 
         #determine time lost £1 per time unit, to evaluate the bid better and make more profits
         moneylosttotime = time
+        moneylostpercent = (moneylosttotime / 1440) * 100
+
+        moneylostheuristic = 0
+
+        if(moneylostpercent >= 3):
+            moneylostheuristic = 1
+
+
 
 
         #First Constraint to solve, if taxi has no passengers
@@ -590,6 +655,67 @@ class Taxi:
 
 
 
+
+
+            farFareDist = self.destination - self.origin
+            farFareDist2 = self.destination + self.origin
+
+
+
+            farFareDistDec = (farFareDist / farFareDist2)
+            farFareDistDec = farFareDist
+
+            fareFareHeuristic = 0.4
+            if (farFareDist <= 5):
+                fareFareHeuristic = 0.9
+            if (farFareDist <= 8):
+                fareFareHeuristic = 0.7
+            elif(farFareDist <= 11):
+                fareFareHeuristic = 0.0
+            elif (farFareDist < 13):
+                fareFareHeuristic = 0.0
+            elif(farFareDist >= 15):
+                fareFareHeuristic = 0.0
+
+
+            if(fareFareHeuristic < 0.5):
+                fareFareHeuristic = 0
+
+            takePassengerHeuristic = 0
+
+            if(fareFareHeuristic == 1):
+                if (farFareDist <= 5):
+                    takePassengerHeuristic = 1
+                if (farFareDist <= 9):
+                    fareFareHeuristic = 1
+                    if (farFareDist > 10):
+                        fareFareHeuristic = 0
+
+
+            ##fare is longer than 4 steps and time heuristicmodifier
+            farHeuristicModifier = fareFareHeuristic
+
+
+            # add heursitic modifier to bid on fare that will make the taxis move and get a fare without
+            # making the bid too high for all taxis, because it causes the dispatcher to keep asking the bid to increase
+            # and no taxis end up getting fares as they build up
+            # or making it too small where it causes the taxi to not even go for the fare
+
+
+
+        fairNoPassengerBidHeuristic = NoPassengersDemandValue and farHeuristicModifier
+        if (random() < .5):
+            fairNoPassengerBidHeuristic = NoPassengersDemandValue and farHeuristicModifier and takePassengerHeuristic
+
+
+        if(moneylosttotime >= 50):
+            if (random() < .5):
+                fairNoPassengerBidHeuristic = NoPassengersDemandValue and takePassengerHeuristic and moneylostheuristic
+
+        if (moneylosttotime >= 50):
+            if (random() < .5):
+                if (random() < .5):
+                    fairNoPassengerBidHeuristic = NoPassengersDemandValue and takePassengerHeuristic and moneylostheuristic
 
 
         #understand bid pricing
@@ -632,15 +758,22 @@ class Taxi:
 
         #ensure that a taxi will get a ride.
         if(NoCurrentPassengers == True):
-            NotCurrentlyBooked = NoCurrentPassengers
-            CloseEnough = NotCurrentlyBooked
+            #NotCurrentlyBooked = NoCurrentPassengers
+            #CloseEnough = NotCurrentlyBooked
+            Worthwhile = PriceBetterThanCost
+            if (random() < .5):
+                Worthwhile = PriceBetterThanCost and fairNoPassengerBidHeuristic
+                if (random() < .5):
+                    Worthwhile = PriceBetterThanCost and fairNoPassengerBidHeuristic and moneylostheuristic
 
         #cost pricing
         Worthwhile = PriceBetterThanCost and NotCurrentlyBooked
 
         #bid
         Bid = CloseEnough and Worthwhile
-
-
+        #if (random() < .5):
+        #    Bid = CloseEnough and Worthwhile and moneylostheuristic
+        #    if (random() < .5):
+        #           Bid = CloseEnough and Worthwhile
 
         return Bid
