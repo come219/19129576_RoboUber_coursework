@@ -12,11 +12,18 @@ import math
 import numpy
 import heapq
 
+#   __________________________________________________
+#   LEGACY COMMENT
 # a data container for all pertinent information related to fares. (Should we
 # add an underway flag and require taxis to acknowledge collection to the dispatcher?)
+#   ________________________________________________
 from numpy.random import random
 
 
+#   _____________________________________________
+#   Fare Entry Class
+#   class that enters a fare and there origin and destination
+#   ___________________________________________
 class FareEntry:
 
       def __init__(self, origin, dest, time, price=0, taxiIndex=-1):
@@ -33,8 +40,8 @@ class FareEntry:
           # self acknowledge collection to dispatcher ??
 
 
-
-
+#   _________________________________________________________________
+#   Dispatcher Class
 '''
 A Dispatcher is a static agent whose job is to allocate fares amongst available taxis. Like the taxis, all
 the relevant functionality happens in ClockTick. The Dispatcher has a list of taxis, a map of the service area,
@@ -43,6 +50,7 @@ Taxis bid after receiving the price, which should be decided by the Dispatcher, 
 of bids are in, the dispatcher should run allocateFare in its world (parent) to inform the winning bidder that they
 now have the fare.
 '''
+#   ______________________________________________________________
 class Dispatcher:
 
       # constructor only needs to know the world it lives in, although you can also populate its knowledge base
@@ -210,34 +218,148 @@ class Dispatcher:
          fare information, even though currently it's not using all of it, because you may wish to
          take into account other details.
       '''
-
-
       # TODO - improve costing
+      # Improve the cost fare for the taxis and the fare
+      # _______________________________________________
+
+#   __________________________________________
+#   cost Fare function
+#   function that allows a better way of creating a cost for the fare
+#   determines value that is added to the final cost
+#   ______________________________________________
       def _costFare(self, fare):
           timeToDestination = self._parent.travelTime(self._parent.getNode(fare.origin[0],fare.origin[1]),
                                                       self._parent.getNode(fare.destination[0],fare.destination[1]))
 
-
           #define a better pricing
 
           # bettervalue = (expected profits + expected number of bids ) / (actual profit + bid)
+          # return bettervalue
+
+          baseValue = 25
+
+          quickdest1 = 5
+          quickdest2 = 15
+
+          # if delivering the fare was taken too long
+          if (fare.calltime > quickdest2):
+              return (baseValue + timeToDestination) / 1.2
+
+          #if delivering the fare was done within the ranged of being quick
+          if(quickdest1 > timeToDestination < quickdest2):
+              return (baseValue+timeToDestination)/0.7
 
           # if the world is gridlocked, a flat fare applies.
           if timeToDestination < 0:
-             return 150
-
-             #return bettervalue
-
+             return baseValue * 6
 
           # return ((better value)+timetodestination)/0.9)
-          return (25+timeToDestination)/0.9
+          return (baseValue+timeToDestination)/0.9
 
-      # TODO
+      # ____________________________________________________
+      # TODO  (LEGACY TODO)
       # this method decides which taxi to allocate to a given fare. The algorithm here is not a fair allocation
       # scheme: taxis can (and do!) get starved for fares, simply because they happen to be far away from the
       # action. You should be able to do better than that using some form of CSP solver (this is just a suggestion,
       # other methods are also acceptable and welcome).
+      # ___________________________________________________
 
+
+#   ________________________________________________________________________
+#   allocate Fare Function
+#   active allocate fare function where the dispatcher uses to assign fares
+#   based on the the highest taxi bid, farily
+#   ________________________________________________________________________
+      def _allocateFare(self, origin, destination, time):
+           # a very simple approach here gives taxis at most 5 ticks to respond, which can
+           # surely be improved upon.
+          if self._parent.simTime-time > 5:
+             allocatedTaxi = -1
+             winnerNode = None
+             fareNode = self._parent.getNode(origin[0],origin[1])
+             # this does the allocation. There are a LOT of conditions to check, namely:
+             # 1) that the fare is asking for transport from a valid location;
+             # 2) that the bidding taxi is in the dispatcher's list of taxis
+             # 3) that the taxi's location is 'on-grid': somewhere in the dispatcher's map
+             # 4) that at least one valid taxi has actually bid on the fare
+
+
+            #contraint satisfaction problem solver
+
+             boolA = False  #constraint 1
+             boolB = False  #constraint 2
+             boolC = False  #constraint 3
+             boolD = False  #constraint 4
+
+
+
+             #constraint 1
+             #considering if the node is from a valid location
+             if fareNode is not None:
+                for taxiIdx in self._fareBoard[origin][destination][time].bidders:
+                    if len(self._taxis) > taxiIdx:
+                       bidderLoc = self._taxis[taxiIdx].currentLocation
+                       bidderNode = self._parent.getNode(bidderLoc[0],bidderLoc[1])
+
+                       boolA = True    #contraint 1 passed
+
+
+
+             #constraint 4
+             #considering at least one taxi on bid
+                       if bidderNode is not None:
+                          # ultimately the naive algorithm chosen is which taxi is the closest. This is patently unfair for several
+                          # reasons, but does produce *a* winner.
+                          a = 1 # move to next and else??
+
+                          bool4 = True # constraint 4 passed
+
+                          if allocatedTaxi >= 0:        #random even to give random winner
+                              if (random() < .5):
+
+                                  bool3 = True  # constraint 3 passed
+
+                                  self._fareBoard[origin][destination][time].taxi = allocatedTaxi
+                                  self._parent.allocateFare(origin, self._taxis[allocatedTaxi])
+                                  winnerNode = bidderNode
+
+
+
+
+             #constraint 2
+             # checking for taxis in dispatcher taxis
+
+                          if winnerNode is None or self._parent.distance2Node(bidderNode,fareNode) < self._parent.distance2Node(winnerNode,fareNode):
+                              #if (random() < .5):
+                              boolB = True  #constraint 2 passed
+                              allocatedTaxi = taxiIdx
+                              winnerNode = bidderNode
+                          else:
+                             # and after all that, we still have to check that somebody won, because any of the other reasons to invalidate
+                             # the auction may have occurred.
+
+
+             #constraint 3
+                             if allocatedTaxi >= 0:
+
+                                 if(boolA & boolB & boolC & boolD):     ##all constraints have passed.
+                                        # but if so, allocate the taxi.
+                                        if (random() < .5):
+                                            self._fareBoard[origin][destination][time].taxi = allocatedTaxi
+                                            self._parent.allocateFare(origin,self._taxis[allocatedTaxi])
+                                            winnerNode = bidderNode
+
+                                        self._fareBoard[origin][destination][time].taxi = allocatedTaxi
+                                        self._parent.allocateFare(origin, self._taxis[allocatedTaxi])
+                                        winnerNode = bidderNode
+
+
+
+
+#   _____________________________________________
+#   Legacy allocate Fare function
+#   The dispatcher function uses this to assign the different bidders to the fare based on the higgest taxi bidder
+#   __________________________________________
       def _allocateFare2(self, origin, destination, time):
           # a very simple approach here gives taxis at most 5 ticks to respond, which can
           # surely be improved upon.
@@ -260,7 +382,7 @@ class Dispatcher:
                               # reasons, but does produce *a* winner.
                               if winnerNode is None or self._parent.distance2Node(bidderNode,
                                                                                   fareNode) < self._parent.distance2Node(
-                                      winnerNode, fareNode):
+                                  winnerNode, fareNode):
                                   allocatedTaxi = taxiIdx
                                   winnerNode = bidderNode
                               else:
@@ -271,76 +393,7 @@ class Dispatcher:
                                       self._fareBoard[origin][destination][time].taxi = allocatedTaxi
                                       self._parent.allocateFare(origin, self._taxis[allocatedTaxi])
 
-      def _allocateFare(self, origin, destination, time):
-           # a very simple approach here gives taxis at most 5 ticks to respond, which can
-           # surely be improved upon.
-          if self._parent.simTime-time > 5:
-             allocatedTaxi = -1
-             winnerNode = None
-             fareNode = self._parent.getNode(origin[0],origin[1])
-             # this does the allocation. There are a LOT of conditions to check, namely:
-             # 1) that the fare is asking for transport from a valid location;
-             # 2) that the bidding taxi is in the dispatcher's list of taxis
-             # 3) that the taxi's location is 'on-grid': somewhere in the dispatcher's map
-             # 4) that at least one valid taxi has actually bid on the fare
 
 
 
 
-            #contraint satisfaction problem solver
-
-
-             #constraint 1
-             #considering if the node is from a valid location
-             if fareNode is not None:
-                for taxiIdx in self._fareBoard[origin][destination][time].bidders:
-                    if len(self._taxis) > taxiIdx:
-                       bidderLoc = self._taxis[taxiIdx].currentLocation
-                       bidderNode = self._parent.getNode(bidderLoc[0],bidderLoc[1])
-
-             #constraint 4
-             #considering at least one taxi on bid
-                       if bidderNode is not None:
-                          # ultimately the naive algorithm chosen is which taxi is the closest. This is patently unfair for several
-                          # reasons, but does produce *a* winner.
-                          a = 1 # move to next and else??
-
-                          if allocatedTaxi >= 0:
-                              if (random() < .5):
-                                  self._fareBoard[origin][destination][time].taxi = allocatedTaxi
-                                  self._parent.allocateFare(origin, self._taxis[allocatedTaxi])
-                                  winnerNode = bidderNode
-
-
-
-
-             #constraint 2
-             # checking for taxis in dispatcher taxis
-
-                          if winnerNode is None or self._parent.distance2Node(bidderNode,fareNode) < self._parent.distance2Node(winnerNode,fareNode):
-                              if (random() < .5):
-                                allocatedTaxi = taxiIdx
-                                winnerNode = bidderNode
-                          else:
-                             # and after all that, we still have to check that somebody won, because any of the other reasons to invalidate
-                             # the auction may have occurred.
-
-
-
-
-             #constraint 3
-                             if allocatedTaxi >= 0:
-
-
-                                    # but if so, allocate the taxi.
-                                    if (random() < .5):
-                                        self._fareBoard[origin][destination][time].taxi = allocatedTaxi
-                                        self._parent.allocateFare(origin,self._taxis[allocatedTaxi])
-                                        winnerNode = bidderNode
-
-                                    self._fareBoard[origin][destination][time].taxi = allocatedTaxi
-                                    self._parent.allocateFare(origin, self._taxis[allocatedTaxi])
-                                    winnerNode = bidderNode
-
-
-     

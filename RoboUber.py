@@ -242,13 +242,7 @@ def runRoboUber(worldX,worldY,runTime,stop,junctions=None,streets=None,interpola
 
    taxis = [taxi0,taxi1,taxi2,taxi3]    # assign individual taxi X to taxis array
 
-   # get revenue
 
-   #revenue =+ taxi0.getFareProfit()
-   #revenue =+ taxi1.getFareProfit()
-   #revenue =+ taxi2.getFareProfit()
-   #revenue =+ taxi3.getFareProfit()
-   revenue = outputValues['fares']
 
    #   _______________________________________________________________________________
 #   Dispatcher functino and Assignment
@@ -278,6 +272,14 @@ def runRoboUber(worldX,worldY,runTime,stop,junctions=None,streets=None,interpola
 
          else:                          # run the thread
             svcArea.runWorld(ticks=1, outputs=outputValues)
+
+            # get revenue
+
+            revenue = + taxi0.getFareProfit()
+            revenue = + taxi1.getFareProfit()
+            revenue = + taxi2.getFareProfit()
+            revenue = + taxi3.getFareProfit()
+            revenue = outputValues['fares']
 
             if threadTime != svcArea.simTime:
 

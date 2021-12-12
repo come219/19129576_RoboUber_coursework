@@ -19,17 +19,22 @@ from collections import defaultdict
 
 
 
-
-
+#   _________________________________
+#   LEGACY COMMENT
 # a data container object for the taxi's internal list of fares. This
 # tells the taxi what fares are available to what destinations at
 # what price, and whether they have been bid upon or allocated. The
 # origin is notably missing: that's because the Taxi will keep this
 # in a dictionary indexed by fare origin, so we don't need to duplicate that
 # here.
+#   ___________________________________
 from numpy.random import random
 
 
+#   ___________________________________________
+#   Fare Info class
+#   assigns how the taxis use the fare data
+#   ________________________________________
 class FareInfo:
 
     def __init__(self, destination, price):
@@ -41,6 +46,8 @@ class FareInfo:
         self.allocated = False
 
 
+#   __________________________________________________________
+#   Taxi Class
 ''' A Taxi is an agent that can move about the world it's in and collect fares. All taxis have a
     number that identifies them uniquely to the dispatcher. Taxis have a certain amount of 'idle'
     time they're willing to absorb, but beyond that, they go off duty since it seems to be a waste
@@ -51,8 +58,7 @@ class FareInfo:
     unavailable, the taxi won't enter the world until it is. Taxis collect revenue for fares, and 
     each minute of active time, whether driving, idle, or conducting a fare, likewise costs them £1.
 '''
-
-
+#   __________________________________________________________
 class Taxi:
 
     #taxi fare unit
@@ -460,7 +466,8 @@ class Taxi:
                 while len(expansionTargets) > 0:    # while expansion search is not at end
                     expectedTarget = expansionTargets.pop() # add the expected target to the top from the top of the expanded path
 
-                    tupExptargetsNextNode = (heuristic(nextNode[1][0], destination) + (expectedTarget[1][1]))
+                    tupExptargetsNextNode = (heuristic(nextNode[1][0], destination) + (expectedTarget[1][0]))
+                    #tupExptargetsNextNode = (heuristic(nextNode[1][0], destination) + (expectedTarget[1][1]))
                     tupExptarget = (heuristic(expectedTarget[0], destination))
                     estimatedDistance = bestPath - tupExptargetsNextNode + tupExptarget  #calculate the estimated distance as the best path -
                                                                                                                                         # heurstitic modifier that effects path based on a value
@@ -631,6 +638,11 @@ class Taxi:
         #domain : variables limits
         #constraints : objects and other object with limit
 
+
+        ## explain some sceanrios
+        ## so that it is clearer
+
+
         #determine time lost £1 per time unit, to evaluate the bid better and make more profits
         moneylosttotime = time
         moneylostpercent = (moneylosttotime / 1440) * 100
@@ -641,21 +653,16 @@ class Taxi:
             moneylostheuristic = 1
 
 
-
-
         #First Constraint to solve, if taxi has no passengers
         NoPassengersDemandValue = 0       # --> domain
         NoCurrentPassengers = self._passenger is None   # no passengers -> variable
 
         #no allocated fares
+
         NoAllocatedFares = len([fare for fare in self._availableFares.values() if fare.allocated]) == 0
 
         if((NoCurrentPassengers == None)):
             NoPassengersDemandValue = 1
-
-
-
-
 
             farFareDist = self.destination - self.origin
             farFareDist2 = self.destination + self.origin
@@ -716,6 +723,9 @@ class Taxi:
             if (random() < .5):
                 if (random() < .5):
                     fairNoPassengerBidHeuristic = NoPassengersDemandValue and takePassengerHeuristic and moneylostheuristic
+
+
+                    ###justify everything
 
 
         #understand bid pricing

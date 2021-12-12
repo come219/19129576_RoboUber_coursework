@@ -22,9 +22,11 @@ from taxi import Taxi
 #   _______________________________
 
 
+#   __________________________________________________
+#   junctionDef Class
 # some straightforward data containers to help in initialising Worlds. A junction will
 # end up being a Node, a street will end up being an Edge.
-
+#
 # a junctionDef contains:
 # 1) its (x,y) coordinates
 # 2) how many taxis can occupy the junction
@@ -35,6 +37,7 @@ from taxi import Taxi
 # 5) how much traffic the Node can hold before locking
 # 6) traffic that 'appears' in the node (usually, at edges of the graph)
 # 7) traffic that 'disappears' from the node (usually, at the edges of the graph)
+#   ____________________________________________________
 class junctionDef:
 
       def __init__(self, x, y, cap, canStop, fareProb=None, maxTraffic=0, src=0, sink=0):
@@ -47,11 +50,14 @@ class junctionDef:
           self.tSrc = src
           self.tSink = sink
 
+#   ____________________________________________________
+#   streetDef Class
 # a streetDef contains:
 # 1) the ID of the 2 end nodes
 # 2) the expected 'outward' connection direction for both (where 'outward' describes
 # the direction that would be relevant if leaving the node via that edge were possible),
 # 3) whether the edge is bidirectional.
+#   _________________________________________________
 class streetDef:
       def __init__(self, nodeAIdx, nodeBIdx, dirA, dirB, biDirectional=True):
           self.nodeA = nodeAIdx # first point (origin if one-way)
@@ -60,6 +66,9 @@ class streetDef:
           self.dirB = dirB      # exit point from nodeB
           self.bidirectional = biDirectional # one-way or 2-way street?
 
+
+#   _____________________________________________________
+#   Fare Class
 '''
 A Fare is a very simple object residing in the world, representing a passenger to be delivered to some
 destination starting from some origin. Fares wait for a taxi for a finite amount of time, given by 
@@ -69,6 +78,7 @@ fare. Meanwhile, they likewise appear at their origin nodes at random times - an
 dispatcher. They have a few simple methods which do the more or less obvious things: collecting and
 dropping them off and assigning a price.
 '''
+#   ___________________________________________________________
 class Fare:
 
       def __init__(self, parent, origin, destination, call_time, wait_time):
@@ -142,6 +152,10 @@ class Fare:
       @property
       def taxi(self):
           return self._taxi
+
+
+#   _______________________________________________
+#   Node Class
 '''
 A Node represents any reachable point in the RoboUber world. Nodes can be thought of as lying on a
 square grid with all the cardinal compass points being adjacent - i.e. the diagonals as well as 
@@ -165,7 +179,8 @@ There is a stop_allowed property. Fares can only be present at a node if stop is
 will only ever be one fare at a given stop (to minimise management of fare allocation). A taxi
 can always opt simply to stop at a given location, but if stop is not allowed, it must not.
 
-'''          
+'''
+#   ________________________________________________
 class Node:
 
       # class constructor. Most arguments are optional, but a Node must have an index
@@ -448,13 +463,16 @@ class Node:
                 return True
           return False
 
+
+#   ______________________________________________________
+#   NetWorld Class
 '''
 NetWorld is the main class responsible for driving the simulation. It contains the road network
 graph, the time-stepper, and the controller that deals with taxi and dispatcher commands. Notionally,
 a time step is a minute of 'real time', but it could, in principle, be almost anything. The 
 graph is a map of Nodes, each of which lies at some (x,y) coordinate.
 '''
-    
+#   ______________________________________________
 class NetWorld:
 
       '''
