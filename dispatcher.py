@@ -312,16 +312,20 @@ class Dispatcher:
                           # reasons, but does produce *a* winner.
                           a = 1 # move to next and else??
 
-                          bool4 = True # constraint 4 passed
+                          boolB = True # constraint 4 passed
 
                           if allocatedTaxi >= 0:        #random even to give random winner
                               if (random() < .5):
 
-                                  bool3 = True  # constraint 3 passed
+                                  boolC = True  # constraint 3 passed
 
-                                  self._fareBoard[origin][destination][time].taxi = allocatedTaxi
-                                  self._parent.allocateFare(origin, self._taxis[allocatedTaxi])
-                                  winnerNode = bidderNode
+                                  # problems with constraint a
+                                  if winnerNode is None or self._parent.distance2Node(bidderNode,fareNode) < self._parent.distance2Node(winnerNode, fareNode):
+
+                                    boolB = True  # constraint 2 passed
+                                    self._fareBoard[origin][destination][time].taxi = allocatedTaxi
+                                    self._parent.allocateFare(origin, self._taxis[allocatedTaxi])
+                                    winnerNode = bidderNode
 
 
 
@@ -341,6 +345,7 @@ class Dispatcher:
 
              #constraint 3
                              if allocatedTaxi >= 0:
+                                 boolC = True
 
                                  if(boolA & boolB & boolC & boolD):     ##all constraints have passed.
                                         # but if so, allocate the taxi.
@@ -352,6 +357,16 @@ class Dispatcher:
                                         self._fareBoard[origin][destination][time].taxi = allocatedTaxi
                                         self._parent.allocateFare(origin, self._taxis[allocatedTaxi])
                                         winnerNode = bidderNode
+             if not (boolA):
+                 print("Constraint A: ", boolA)
+             if not (boolB):
+                 print("Constraint B: ", boolB)
+             if not (boolC):
+                 print("Constraint A: ", boolC)
+             if not (boolD):
+                 print("Constraint A: ", boolD)
+
+
 
 
 

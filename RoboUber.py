@@ -47,7 +47,7 @@ worldX = 50                 # world's X parameter
 worldY = 50                 # world's Y parameter
 runTime = 1440              # total run time parameter
 displaySize = (1024,768)    # you can change the DisplaySize to be bigger if you want larger-size objects on-screen
-trafficOn = True            # Traffic parameter, causes problems in determining paths and creates the time destination to take longer
+trafficOn = False            # Traffic parameter, causes problems in determining paths and creates the time destination to take longer
 
 #   ______________________________________________________________________________________________
 #   TODO (LEGACY COMMENT)

@@ -430,7 +430,6 @@ class Taxi:
 
 
 # !!!   explain a star algorithm step by step
-
 # !!!   explain how heuristic is used
 
 
@@ -466,8 +465,8 @@ class Taxi:
                 while len(expansionTargets) > 0:    # while expansion search is not at end
                     expectedTarget = expansionTargets.pop() # add the expected target to the top from the top of the expanded path
 
-                    tupExptargetsNextNode = (heuristic(nextNode[1][0], destination) + (expectedTarget[1][0]))
-                    #tupExptargetsNextNode = (heuristic(nextNode[1][0], destination) + (expectedTarget[1][1]))
+                    tupExptargetsNextNode = (heuristic(nextNode[1][0], destination) + (expectedTarget[0][0]))
+                    #tupExptargetsNextNode = (heuristic(nextNode[1][0], destination) + (expectedTarget[1][0]))
                     tupExptarget = (heuristic(expectedTarget[0], destination))
                     estimatedDistance = bestPath - tupExptargetsNextNode + tupExptarget  #calculate the estimated distance as the best path -
                                                                                                                                         # heurstitic modifier that effects path based on a value
@@ -634,6 +633,9 @@ class Taxi:
         ## Multiple if statements to check for values as 'checks'
         ## reasoning based on probabilistic reasoning
 
+
+
+
         #variables : objects
         #domain : variables limits
         #constraints : objects and other object with limit
@@ -647,9 +649,9 @@ class Taxi:
         moneylosttotime = time
         moneylostpercent = (moneylosttotime / 1440) * 100
 
-        moneylostheuristic = 0
+        moneylostheuristic = 0      #   if theres no value to the lost, it is assigned 0
 
-        if(moneylostpercent >= 3):
+        if(moneylostpercent >= 10): #   as soon as the taxis start to lose a signnificant portion of time, they will start bidding
             moneylostheuristic = 1
 
 
@@ -661,36 +663,40 @@ class Taxi:
 
         NoAllocatedFares = len([fare for fare in self._availableFares.values() if fare.allocated]) == 0
 
+
+        #   modifier that only applies if theres no passengers
         if((NoCurrentPassengers == None)):
+
+            #set the demand to one
             NoPassengersDemandValue = 1
 
-            farFareDist = self.destination - self.origin
-            farFareDist2 = self.destination + self.origin
+            farFareDist = self.destination - self.origin    # calculate some distances
+            farFareDist2 = self.destination + self.origin   # calculate more distances
 
-
-
-            farFareDistDec = (farFareDist / farFareDist2)
+            farFareDistDec = (farFareDist / farFareDist2)   #distance in a portion
             farFareDistDec = farFareDist
 
+
+            #   create a distance formulat where the lower the distance from the taxi and fare will cause more bid
+            #   the further the fare from the taxi, the less likely to bid
             fareFareHeuristic = 0.4
             if (farFareDist <= 5):
                 fareFareHeuristic = 0.9
             if (farFareDist <= 8):
-                fareFareHeuristic = 0.7
+                fareFareHeuristic = 0.7     #   set modifier higher than 0.5
             elif(farFareDist <= 11):
-                fareFareHeuristic = 0.0
+                fareFareHeuristic = 0.0     # distance is further than 0.5 set to 0
             elif (farFareDist < 13):
                 fareFareHeuristic = 0.0
             elif(farFareDist >= 15):
                 fareFareHeuristic = 0.0
 
-
-            if(fareFareHeuristic < 0.5):
+            if(fareFareHeuristic < 0.5):    # set any less than 0.5 to 0
                 fareFareHeuristic = 0
 
             takePassengerHeuristic = 0
 
-            if(fareFareHeuristic == 1):
+            if(fareFareHeuristic == 1):         #   new distance modifier check to stop the aggression
                 if (farFareDist <= 5):
                     takePassengerHeuristic = 1
                 if (farFareDist <= 9):
@@ -709,24 +715,23 @@ class Taxi:
             # or making it too small where it causes the taxi to not even go for the fare
 
 
-
+        #    random probability to increase bid
+        #   assign no passenger heuristic
         fairNoPassengerBidHeuristic = NoPassengersDemandValue and farHeuristicModifier
-        if (random() < .5):
+
+        if (random() < .5): #   force take passenger
             fairNoPassengerBidHeuristic = NoPassengersDemandValue and farHeuristicModifier and takePassengerHeuristic
 
-
         if(moneylosttotime >= 50):
-            if (random() < .5):
+            if (random() < .5): #   force take passenger becuase of lost time
                 fairNoPassengerBidHeuristic = NoPassengersDemandValue and takePassengerHeuristic and moneylostheuristic
 
         if (moneylosttotime >= 50):
             if (random() < .5):
-                if (random() < .5):
+                if (random() < .5): #   force take passenger becuase of lost time
                     fairNoPassengerBidHeuristic = NoPassengersDemandValue and takePassengerHeuristic and moneylostheuristic
 
-
-                    ###justify everything
-
+        ##  justify everything
 
         #understand bid pricing
         TimeToOrigin = self._world.travelTime(self._loc, self._world.getNode(origin[0], origin[1]))
