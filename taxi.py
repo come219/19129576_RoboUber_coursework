@@ -465,9 +465,11 @@ class Taxi:
                 while len(expansionTargets) > 0:    # while expansion search is not at end
                     expectedTarget = expansionTargets.pop() # add the expected target to the top from the top of the expanded path
 
-                    tupExptargetsNextNode = (heuristic(nextNode[1][0], destination) + (expectedTarget[0][0]))
+                    tupExptargetsNextNode = (heuristic(nextNode[1][0], destination) + (expectedTarget[1][0]))
+                    #tupExptargetsNextNode = (heuristic(nextNode[1][0], destination) + (expectedTarget[0][0]))
                     #tupExptargetsNextNode = (heuristic(nextNode[1][0], destination) + (expectedTarget[1][0]))
-                    tupExptarget = (heuristic(expectedTarget[0], destination))
+                    tupExptarget = (heuristic(expectedTarget[1], destination))
+                    #tupExptarget = (heuristic(expectedTarget[0], destination))
                     estimatedDistance = bestPath - tupExptargetsNextNode + tupExptarget  #calculate the estimated distance as the best path -
                                                                                                                                         # heurstitic modifier that effects path based on a value
                                                                                                                                         # that will make another path more or less likely
@@ -628,18 +630,13 @@ class Taxi:
     #   ___________________________________________________________________
     def _bidOnFare(self, time, origin, destination, price):
 
-
         ## CSP SOLVER
         ## Multiple if statements to check for values as 'checks'
         ## reasoning based on probabilistic reasoning
 
-
-
-
         #variables : objects
         #domain : variables limits
         #constraints : objects and other object with limit
-
 
         ## explain some sceanrios
         ## so that it is clearer
@@ -651,7 +648,7 @@ class Taxi:
 
         moneylostheuristic = 0      #   if theres no value to the lost, it is assigned 0
 
-        if(moneylostpercent >= 10): #   as soon as the taxis start to lose a signnificant portion of time, they will start bidding
+        if(moneylostpercent >= 2): #   as soon as the taxis start to lose a signnificant portion of time, they will start bidding
             moneylostheuristic = 1
 
 
@@ -676,7 +673,6 @@ class Taxi:
             farFareDistDec = (farFareDist / farFareDist2)   #distance in a portion
             farFareDistDec = farFareDist
 
-
             #   create a distance formulat where the lower the distance from the taxi and fare will cause more bid
             #   the further the fare from the taxi, the less likely to bid
             fareFareHeuristic = 0.4
@@ -686,24 +682,29 @@ class Taxi:
                 fareFareHeuristic = 0.7     #   set modifier higher than 0.5
             elif(farFareDist <= 11):
                 fareFareHeuristic = 0.0     # distance is further than 0.5 set to 0
+                print("fare is too far 1s")
             elif (farFareDist < 13):
                 fareFareHeuristic = 0.0
+                print("fare is too far 1")
             elif(farFareDist >= 15):
                 fareFareHeuristic = 0.0
-
+                print("fare is too far 1")
             if(fareFareHeuristic < 0.5):    # set any less than 0.5 to 0
                 fareFareHeuristic = 0
-
+                print("fare is too far 2")
             takePassengerHeuristic = 0
 
-            if(fareFareHeuristic == 1):         #   new distance modifier check to stop the aggression
+            if(fareFareHeuristic >= 0.3):         #   new distance modifier check to stop the aggression
                 if (farFareDist <= 5):
                     takePassengerHeuristic = 1
+                    fareFareHeuristic = 1
                 if (farFareDist <= 9):
+                    takePassengerHeuristic = 1
                     fareFareHeuristic = 1
                     if (farFareDist > 10):
+                        takePassengerHeuristic = 0
                         fareFareHeuristic = 0
-
+                        print("fare is too far 3")
 
             ##fare is longer than 4 steps and time heuristicmodifier
             farHeuristicModifier = fareFareHeuristic
@@ -721,6 +722,7 @@ class Taxi:
 
         if (random() < .5): #   force take passenger
             fairNoPassengerBidHeuristic = NoPassengersDemandValue and farHeuristicModifier and takePassengerHeuristic
+            print("fare forced")
 
         if(moneylosttotime >= 50):
             if (random() < .5): #   force take passenger becuase of lost time
@@ -729,7 +731,7 @@ class Taxi:
         if (moneylosttotime >= 50):
             if (random() < .5):
                 if (random() < .5): #   force take passenger becuase of lost time
-                    fairNoPassengerBidHeuristic = NoPassengersDemandValue and takePassengerHeuristic and moneylostheuristic
+                    fairNoPassengerBidHeuristic = NoPassengersDemandValue and takePassengerHeuristic and moneylostheuristic and takePassengerHeuristic
 
         ##  justify everything
 
@@ -770,19 +772,19 @@ class Taxi:
 
         CloseEnough = CanAffordToDrive and WillArriveOnTime
 
-
-        #ensure that a taxi will get a ride.
-        if(NoCurrentPassengers == True):
-            #NotCurrentlyBooked = NoCurrentPassengers
-            #CloseEnough = NotCurrentlyBooked
-            Worthwhile = PriceBetterThanCost
-            if (random() < .5):
-                Worthwhile = PriceBetterThanCost and fairNoPassengerBidHeuristic
-                if (random() < .5):
-                    Worthwhile = PriceBetterThanCost and fairNoPassengerBidHeuristic and moneylostheuristic
-
         #cost pricing
         Worthwhile = PriceBetterThanCost and NotCurrentlyBooked
+
+        if (random() < .5):
+            #ensure that a taxi will get a ride.
+            if(NoCurrentPassengers == True):
+                #NotCurrentlyBooked = NoCurrentPassengers
+                #CloseEnough = NotCurrentlyBooked
+                Worthwhile = PriceBetterThanCost and NotCurrentlyBooked
+                if (random() < .5):
+                    Worthwhile = PriceBetterThanCost and fairNoPassengerBidHeuristic and NotCurrentlyBooked
+                    if (random() < .5):
+                        Worthwhile = PriceBetterThanCost and fairNoPassengerBidHeuristic and moneylostheuristic
 
         #bid
         Bid = CloseEnough and Worthwhile

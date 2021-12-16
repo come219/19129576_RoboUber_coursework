@@ -253,8 +253,18 @@ class Dispatcher:
           if timeToDestination < 0:
              return baseValue * 6
 
-          # return ((better value)+timetodestination)/0.9)
-          return (baseValue+timeToDestination)/0.9
+          # random tipping to the taxis
+          if (random() < .5):
+              tip = 5   # bases tip
+              if (random() < .5):
+                  tip = 7   # random high tip
+              if(timeToDestination > 12):
+                  tip = tip - 2 # negative tip factor if the trip was long
+              return ((baseValue + timeToDestination) / 0.9) + tip
+
+          # return ((better value)+timetodestination)/0.9)  # legacy implementation
+
+          return (baseValue+timeToDestination)/0.9  # base return
 
       # ____________________________________________________
       # TODO  (LEGACY TODO)
@@ -278,20 +288,13 @@ class Dispatcher:
              winnerNode = None
              fareNode = self._parent.getNode(origin[0],origin[1])
              # this does the allocation. There are a LOT of conditions to check, namely:
-             # 1) that the fare is asking for transport from a valid location;
-             # 2) that the bidding taxi is in the dispatcher's list of taxis
-             # 3) that the taxi's location is 'on-grid': somewhere in the dispatcher's map
-             # 4) that at least one valid taxi has actually bid on the fare
-
 
             #contraint satisfaction problem solver
 
-             boolA = False  #constraint 1
-             boolB = False  #constraint 2
-             boolC = False  #constraint 3
-             boolD = False  #constraint 4
-
-
+             boolA = False  #constraint 1   1) that the fare is asking for transport from a valid location;
+             boolB = False  #constraint 2   2) that the bidding taxi is in the dispatcher's list of taxis
+             boolC = False  #constraint 3   3) that the taxi's location is 'on-grid': somewhere in the dispatcher's map
+             boolD = False  #constraint 4   4) that at least one valid taxi has actually bid on the fare
 
              #constraint 1
              #considering if the node is from a valid location
